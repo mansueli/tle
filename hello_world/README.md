@@ -1,0 +1,1 @@
+The `hello_world` extension provides a `greet` function, which returns a greeting.
