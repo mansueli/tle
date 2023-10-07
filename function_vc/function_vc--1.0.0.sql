@@ -8,7 +8,7 @@ CREATE TABLE archive.function_history (
   return_type text,
   source_code text,
   lang_settings text,
-  updated_at timestampz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
   version NUMERIC DEFAULT 1,
   CONSTRAINT function_history_pkey PRIMARY KEY (id)
 );
@@ -157,7 +157,7 @@ REVOKE EXECUTE ON FUNCTION rollback_function FROM public;
 REVOKE EXECUTE ON FUNCTION rollback_function FROM anon, authenticated;
 
 -- Example of rolling back a function
-SELECT rollback_function('convert_to_uuid');
+-- SELECT rollback_function('convert_to_uuid');
 
 CREATE OR REPLACE FUNCTION archive.setup_function_history(schema_name text default 'public')
 RETURNS VOID AS
