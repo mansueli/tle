@@ -2,6 +2,8 @@
 
 Function VC is a set of functions that allow you to version control your Postgres functions in the database.
 
+This is a Trusted language extension to allow for an easy install of the version control of Postgres functions that was published on this blog post: [Easy Deployment and Rollback of PostgreSQL Functions with Supabase](https://blog.mansueli.com/streamlining-postgresql-function-management-with-supabase).
+
 ## Creating a function:
 
 ```sql
