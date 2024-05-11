@@ -48,6 +48,24 @@ SELECT rollback_function('convert_to_uuid', 2);
 
 ```
 
+View the function history and versions
+
+```sql
+
+SELECT * from archive.function_history
+  WHERE schema_name = 'public' 
+  and function_name ='convert_to_uuid' ;
+
+```
+
+Check the current definition of a function
+
+```sql
+
+SELECT pg_get_functiondef((SELECT oid FROM pg_proc
+  WHERE proname = 'convert_to_uuid'));
+
+```
 
 Storing all existing functions in the database:
 
