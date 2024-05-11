@@ -32,13 +32,22 @@ $$
 );
 ```
 
-Rolling back a function:
+Rolling back the latest version of a function:
 
 ```sql
 
 SELECT rollback_function('convert_to_uuid');
 
 ```
+
+Rolling back a specific version of a function:
+
+```sql
+
+SELECT rollback_function('convert_to_uuid', 2);
+
+```
+
 
 Storing all existing functions in the database:
 
