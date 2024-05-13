@@ -32,11 +32,38 @@ $$
 );
 ```
 
-Rolling back a function:
+Rolling back the latest version of a function:
 
 ```sql
 
 SELECT rollback_function('convert_to_uuid');
+
+```
+
+Rolling back a specific version of a function:
+
+```sql
+
+SELECT rollback_function('convert_to_uuid', 2);
+
+```
+
+View the function history and versions
+
+```sql
+
+SELECT * from archive.function_history
+  WHERE schema_name = 'public' 
+  and function_name ='convert_to_uuid' ;
+
+```
+
+Check the current definition of a function
+
+```sql
+
+SELECT pg_get_functiondef((SELECT oid FROM pg_proc
+  WHERE proname = 'convert_to_uuid'));
 
 ```
 
