@@ -10,7 +10,8 @@ This is a Trusted language extension to allow for an easy install of the version
 <details>
 
 <summary>(if you don't have it)</summary>
-```
+
+```sql
 /*---------------------
 ---- install dbdev ----
 ----------------------
@@ -60,6 +61,7 @@ select dbdev.install('supabase-dbdev');
 drop extension if exists "supabase-dbdev";
 create extension "supabase-dbdev";
 ```
+
 </details>
 
 ### Installing Function VC
