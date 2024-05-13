@@ -113,20 +113,37 @@ create_function_from_source FROM public;
 REVOKE EXECUTE ON FUNCTION 
 create_function_from_source FROM anon, authenticated;
 
-CREATE OR REPLACE FUNCTION public.rollback_function(
+
+-- Rollback function
+CREATE OR REPLACE FUNCTION rollback_function(
   func_name text,
+  version_no integer default 0,
   schema_n text default 'public'
-) RETURNS text
+) RETURNS text 
 SECURITY DEFINER
 AS $$
 DECLARE
   function_text text;
+  target_version integer;
 BEGIN
-  -- Get the most recent function version from the function_history table
+  -- Set the target version
+  IF version_no = 0
+  THEN
+    SELECT version into target_version
+      FROM archive.function_history
+      WHERE function_name = func_name AND schema_name = schema_n
+      ORDER BY updated_at DESC
+  LIMIT 1;
+  ELSE
+    target_version := version_no;
+  END IF;
+
+  -- Get the function source of target version from the function_history table
   SELECT source_code
   INTO function_text
   FROM archive.function_history
   WHERE function_name = func_name AND schema_name = schema_n
+    AND version = target_version
   ORDER BY updated_at DESC
   LIMIT 1;
 
