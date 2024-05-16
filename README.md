@@ -5,6 +5,6 @@ This is a monorepo to keep TLE extensions to be used in your database. You'll ne
 Extensions available on [Database.dev](Database.dev) registry:
 
 - [Function Version Control](https://github.com/mansueli/tle/tree/master/function_vc)
+- [RLS Helpers](https://github.com/mansueli/tle/tree/master/rls_helpers)
 - [Supa_queue](https://github.com/mansueli/supa_queue)
 - [Hello World Example](https://github.com/mansueli/tle/tree/master/hello_world)
-  

@@ -1,2 +1,5 @@
-default_version = 0.0.1
-comment = 'An extension to generate greetings'
+# rls_helpers extension
+comment = 'An extension to help with RLS policies within the database context'
+default_version = '1.0.0'
+relocatable = false
+superuser = false
