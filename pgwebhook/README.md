@@ -39,9 +39,14 @@ DECLARE
     allowed_regions TEXT[] := ARRAY['eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-north-1', 'eu-central-1'];
 BEGIN
     -- Set headers with anon key and Content-Type
-    custom_headers := jsonb_build_object('Authorization', vault.get_anon_key(bearer := true), 'Content-Type', 'application/json', 'x-region', allowed_regions);
+    custom_headers := jsonb_build_object('Authorization', vault.get_anon_key(bearer := true),
+                                         'Content-Type', 'application/json');
     -- Call edge_wrapper function with default values
-    RETURN hook.edge_wrapper(url := ('https://supanacho.supabase.co/functions/v1/' || func), headers := custom_headers, payload := data, max_retries := 5, allowed_regions := allowed_regions);
+    RETURN hook.edge_wrapper(url := ('https://supanacho.supabase.co/functions/v1/' || func),
+                             headers := custom_headers,
+                             payload := data,
+                             max_retries := 5,
+                             allowed_regions := allowed_regions);
 END;
 $function$;
 ```
