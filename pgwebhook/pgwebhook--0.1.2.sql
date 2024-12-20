@@ -181,6 +181,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+
+
 CREATE OR REPLACE FUNCTION hook.webhook_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -292,4 +294,106 @@ BEGIN
 
     -- Validate response JSON structure
     IF response_json IS NULL OR NOT jsonb_typeof(response_json) = 'object' THEN
-        RAISE EXCEPTION 'Inval...
+        RAISE EXCEPTION 'Invalid response JSON: %', response_json;
+    END IF;
+
+    -- Log the request
+    INSERT INTO hook.responses (hook_table_id, hook_name, request_id, response_body)
+    VALUES (TG_RELID, TG_NAME, COALESCE((response_json->>'request_id')::bigint, NULL), response_json);
+    RETURN NEW;
+END
+$function$;
+
+CREATE OR REPLACE FUNCTION hook.edgehook_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+    payload jsonb;
+    url text := TG_ARGV[0]::text;
+    method text := TG_ARGV[1]::text;
+    headers jsonb;
+    params jsonb;
+    timeout_ms integer;
+    max_retries integer := 5;
+    allowed_regions text[];
+    response_json jsonb;
+BEGIN
+    IF url IS NULL OR url = 'null' THEN
+        RAISE EXCEPTION 'url argument is missing';
+    END IF;
+
+    IF method IS NULL OR method = 'null' THEN
+        RAISE EXCEPTION 'method argument is missing';
+    END IF;
+
+    IF TG_ARGV[2] IS NULL OR TG_ARGV[2] = 'null' THEN
+        headers := '{"Content-Type": "application/json"}'::jsonb;
+    ELSE
+        headers := TG_ARGV[2]::jsonb;
+    END IF;
+
+    IF TG_ARGV[3] IS NULL OR TG_ARGV[3] = 'null' THEN
+        params := '{}'::jsonb;
+    ELSE
+        params := TG_ARGV[3]::jsonb;
+    END IF;
+
+    IF TG_ARGV[4] IS NULL OR TG_ARGV[4] = 'null' THEN
+        timeout_ms := 5000;
+    ELSE
+        timeout_ms := TG_ARGV[4]::integer;
+    END IF;
+
+    IF TG_ARGV[5] IS NOT NULL AND TG_ARGV[5] <> 'null' THEN
+        allowed_regions := TG_ARGV[5]::text[];
+    END IF;
+
+    -- Validate method
+    IF NOT method IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD') THEN
+        RAISE EXCEPTION 'Invalid HTTP method: %', method;
+    END IF;
+
+    -- Validate headers
+    IF headers IS NULL OR NOT jsonb_typeof(headers) = 'object' THEN
+        RAISE EXCEPTION 'Invalid headers parameter: %', headers;
+    END IF;
+
+    -- Validate params
+    IF params IS NULL OR NOT jsonb_typeof(params) = 'object' THEN
+        RAISE EXCEPTION 'Invalid params parameter: %', params;
+    END IF;
+
+    -- Construct payload
+    payload := jsonb_build_object(
+        'old_record', TO_JSONB(OLD),
+        'record', TO_JSONB(NEW),
+        'type', TG_OP,
+        'table', TG_TABLE_NAME,
+        'schema', TG_TABLE_SCHEMA
+    );
+
+    -- Call hook.edge_wrapper function
+    response_json := hook.edge_wrapper(
+        url := url,
+        method := method,
+        headers := headers,
+        params := params,
+        payload := payload,
+        timeout_ms := timeout_ms,
+        max_retries := max_retries,
+        allowed_regions := allowed_regions
+    );
+
+    -- Validate response JSON structure
+    IF response_json IS NULL OR NOT jsonb_typeof(response_json) = 'object' THEN
+        RAISE EXCEPTION 'Invalid response JSON: %', response_json;
+    END IF;
+
+    -- Log the request
+    INSERT INTO hook.responses (hook_table_id, hook_name, response_body)
+    VALUES (TG_RELID, TG_NAME, response_json);
+    RETURN NEW;
+END
+$function$;
+
