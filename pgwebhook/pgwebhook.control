@@ -1,6 +1,6 @@
 # Webhooks extension
 comment = 'A very powerful extension to use webhooks and interact with Supabase Edge Functions'
 requires = http
-default_version = '0.1.1'
+default_version = '0.1.2'
 relocatable = false
 superuser = false
