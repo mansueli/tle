@@ -1,0 +1,4 @@
+default_version = 4.2.0
+comment = 'An extension to use brainfuck code within the database'
+requires = plv8
+relocatable = true
