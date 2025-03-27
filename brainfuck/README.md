@@ -53,8 +53,6 @@ lateral (
 ) resp(contents);
 create extension "supabase-dbdev";
 select dbdev.install('supabase-dbdev');
-drop extension if exists "supabase-dbdev";
-create extension "supabase-dbdev";
 ```
 
 ### Step 2: Install BrainFuck TLE
