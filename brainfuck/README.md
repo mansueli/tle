@@ -3,6 +3,9 @@
 ## Overview
 The **BrainFuck TLE** is a Trusted Language Extension (TLE) for PostgreSQL that allows users to execute BrainFuck programs directly within their database. This extension provides a fun and unconventional way to integrate esoteric programming into PostgreSQL.
 
+> [!IMPORTANT]  
+> **Check out the [blog post](https://blog.mansueli.com/supabrain-when-supabase-got-too-fast)**
+
 ## Features
 - Execute BrainFuck programs within SQL queries
 - Supports standard BrainFuck operations (`+`, `-`, `<`, `>`, `[`, `]`, `,`, `.`)
