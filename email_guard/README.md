@@ -1,101 +1,105 @@
 # email_guard
 
-Helper functions for Supabase Auth “before-user-created” hook:
-- Block signups from disposable email domains
-- Enforce single-account policy for Gmail by normalizing addresses (remove dots and +tag)
+Trusted Language Extension (TLE) that guards Supabase Auth signups:
+- Blocks disposable email domains.
+- Normalizes Gmail addresses (remove dots and + tags) so each Gmail account can sign up only once.
 
-## What it provides
+Objects are created in the extension schema (`@extschema@`) so the package is relocatable.
 
-- Table: `public.disposable_email_domains(domain text primary key)`
-- Function: `public.normalize_email(email text) returns text`
-- Function: `public.is_disposable_email_domain(domain text) returns boolean`
-- Function: `public.is_disposable_email(email text) returns boolean`
-- Hook helper: `public.hook_prevent_disposable_and_enforce_gmail_uniqueness(event jsonb) returns jsonb`
+## What’s inside
 
-Normalization details:
-- For `gmail.com` and `googlemail.com`, dots in the local part are removed, anything after `+` is stripped, and the domain is normalized to `gmail.com`.
-- For all other domains, the email is lowercased only.
+- Table: `@extschema@.disposable_email_domains(domain text primary key)`
+- Function: `@extschema@.normalize_email(text)`
+- Function: `@extschema@.is_disposable_email_domain(text)`
+- Function: `@extschema@.is_disposable_email(text)`
+- Hook helper: `@extschema@.hook_prevent_disposable_and_enforce_gmail_uniqueness(jsonb)`
 
-## Install (database.dev)
+Fresh installs and upgrades seed the full disposable-domain blocklist automatically; no extra seed scripts required.
 
-This package is formatted for database.dev. After publishing from this repo (see below), you can add it to a database:
+## Install via database.dev (Supabase-friendly workflow)
+
+You can publish this package as `mansueli@email_guard` and install it the same way you would install other dbdev TLEs.
+
+### 1. Install dbdev & Supabase CLI (if needed)
+
+- dbdev CLI: <https://supabase.github.io/dbdev/getting-started/>
+- Supabase CLI: <https://supabase.com/docs/guides/cli>
+
+Make sure your local project is connected to your Supabase database (`supabase link`). Supabase already has the `pg_tle` extension installed, which is the only prerequisite.
+
+### 2. Generate a migration with dbdev
+
+Use dbdev to pull version `0.2.0` (or newer) into your migrations folder. Example:
+
+```bash
+dbdev add \
+  -o ./supabase/migrations/ \
+  -v 0.2.0 \
+  -s extensions \
+  package \
+  -n mansueli@email_guard
+```
+
+- `-s extensions` installs into the `extensions` schema (recommended on Supabase).
+- Adjust the output folder if your project keeps migrations elsewhere.
+
+### 3. Apply with Supabase CLI
+
+Push the generated migration to your project database:
+
+```bash
+supabase db push
+```
+
+After the migration runs, the extension is installed and seeded in the target schema.
+
+## Wire up the Supabase Auth hook
+
+In the Supabase dashboard, add a **before-user-created** hook of type **Postgres Function** pointing to the schema and function you installed. For the example above (installed in `extensions`):
+
+```
+extensions.hook_prevent_disposable_and_enforce_gmail_uniqueness
+```
+
+Behavior:
+- Disposable domains trigger a 403 with a helpful error message.
+- Gmail/Googlemail addresses normalize to `gmail.com` with dots removed and `+tags` stripped; if a normalized Gmail already exists in `auth.users`, the hook raises a 409.
+- Signups without an email (e.g., phone) are passed through unchanged.
+
+## Keeping the blocklist current
+
+This repo ships an automated workflow:
+- Weekly job fetches the upstream disposable-email list.
+- If there are changes, it bumps the minor version, creates the upgrade script, and commits both the new base version and control-file update.
+
+To publish the updated version:
+
+```bash
+dbdev login        # paste your database.dev token
+dbdev publish      # in the repo root or the email_guard folder
+```
+
+Upgrading your database to the new version pulls in the refreshed blocklist automatically.
+
+## Handy queries
 
 ```sql
-create extension email_guard
-  schema email_guard
-  version 'LATEST';
-```
+-- Check if an email domain is disposable
+select extensions.is_disposable_email('user@mailinator.com');
 
-The weekly workflow bumps minor versions when the upstream blocklist changes and embeds the updated data into the extension so a fresh install includes the latest domains. If you prefer, you can also seed manually:
+-- Normalize a Gmail address
+select extensions.normalize_email('e.xam.ple+promo@gmail.com');
 
-```sql
--- Optional: manual seeding for the default public schema
---   Run email_guard/seed/disposable_email_domains.sql
--- If you installed in a non-public schema, adapt the table reference accordingly.
-```
-
-## Configure the Auth hook
-
-In the Supabase dashboard, go to Auth → Hooks and create a “before-user-created” hook of type “Postgres Function”, pointing to:
-
-```
-<your_schema>.hook_prevent_disposable_and_enforce_gmail_uniqueness
-```
-
-This function expects the event payload described in the Supabase docs and will:
-- Reject disposable email domains with HTTP 403 and a clear message.
-- For Gmail addresses, reject signups that normalize to an existing account with HTTP 409.
-
-## Keeping the blocklist fresh
-
-This repo includes a GitHub Action that runs weekly to:
-- Regenerate `email_guard/seed/disposable_email_domains.sql` from the upstream list
-- If the list changed, bump the extension minor version and generate:
-  - `email_guard/email_guard--<prev>--<next>.sql` (upgrade: truncates and inserts new data)
-  - `email_guard/email_guard--<next>.sql` (base: includes DDL and the latest data)
-- Source: https://github.com/disposable-email-domains/disposable-email-domains/blob/main/disposable_email_blocklist.conf
-
-If you want to refresh it manually, run:
-
-```sh
-node scripts/update_disposable_domains.js
-```
-
-Then apply the updated seed SQL to your database if you want to refresh immediately without upgrading the extension. Otherwise, upgrading the extension to the next version will perform the data refresh.
-
-## Publish to database.dev
-
-1. Authenticate: `dbdev login` (use a token from database.dev)
-2. From the repo root (or package folder), run: `dbdev publish`
-3. New versions are published after the weekly job bumps versions when the blocklist changes.
-
-Notes:
-- The extension is relocatable and uses `@extschema@` placeholders internally.
-- Upgrade and base SQL embed data using `insert into @extschema@.disposable_email_domains...`.
-
-## Examples
-
-- Check if an email is disposable:
-
-```sql
-select public.is_disposable_email('user@mailinator.com'); -- true
-```
-
-- See the normalized Gmail form:
-
-```sql
-select public.normalize_email('e.xam.ple+promo@gmail.com'); -- example@gmail.com
-```
-
-- Use in the before-user-created hook:
-
-```sql
-select public.hook_prevent_disposable_and_enforce_gmail_uniqueness(
+-- Simulate hook behavior
+select extensions.hook_prevent_disposable_and_enforce_gmail_uniqueness(
   '{"user": {"email": "e.xam.ple+1@gmail.com"}}'::jsonb
 );
 ```
 
+Replace `extensions` with the schema you chose if different.
+
 ## Notes
 
-- The hook runs before insertion; the new user is not yet present in `auth.users`, but existing users are. The Gmail uniqueness check compares the normalized form across existing users.
-- The domain check treats parent domains as matches (e.g., `sub.mailinator.com` matches `mailinator.com`).
+- The hook runs before the user is inserted, so only existing users are checked for Gmail duplicates.
+- Domain matching walks up parent domains (`sub.mailinator.com` matches `mailinator.com`).
+- The extension is relocatable; you can install it under any schema and reference it in the hook configuration.
