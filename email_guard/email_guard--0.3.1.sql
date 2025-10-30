@@ -1,4 +1,4 @@
--- email_guard v0.3.0
+-- email_guard v0.3.1
 -- Signup email guard: Gmail normalization and disposable domain checks for Supabase Auth hooks
 
 create table if not exists @extschema@.disposable_email_domains (

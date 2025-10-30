@@ -100,6 +100,10 @@ function updateVersionComment(sql, version) {
   return sql.replace(re, `$1${version}`);
 }
 
+function removePsqlGuard(sql) {
+  return sql.replace(/^(?:\\echo.*\r?\n)?(?:\\quit\r?\n)?/i, '');
+}
+
 async function updateReadmeVersion(currentVersion, nextVersion) {
   let readme;
   try {
@@ -167,7 +171,7 @@ async function main() {
   const upgradePath = path.join(EXT_DIR, `email_guard--${currentVersion}--${nextVersion}.sql`);
   await writeFile(upgradePath, upgradeSQL, 'utf8');
 
-  const strippedBase = updateVersionComment(stripExistingSeed(latestBaseSQL), nextVersion);
+  const strippedBase = updateVersionComment(removePsqlGuard(stripExistingSeed(latestBaseSQL)), nextVersion);
   const nextBasePath = path.join(EXT_DIR, `email_guard--${nextVersion}.sql`);
   const baseInsert = buildFullInsertSQL(domains);
   const nextBaseSQL = `${strippedBase}\n\n-- Seed disposable email domains (auto-generated)\n-- Source: ${SOURCE_URL}\n${baseInsert}`;

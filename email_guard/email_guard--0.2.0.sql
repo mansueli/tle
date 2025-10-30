@@ -1,6 +1,3 @@
-\echo Use "CREATE EXTENSION email_guard" to load this file.
-\quit
-
 -- email_guard v0.2.0
 -- Signup email guard: Gmail normalization and disposable domain checks for Supabase Auth hooks
 

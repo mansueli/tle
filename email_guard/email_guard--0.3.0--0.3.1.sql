@@ -1,0 +1,2 @@
+-- email_guard upgrade 0.3.0 -> 0.3.1
+-- No schema or data changes; version bump for installation testing.
