@@ -20,23 +20,15 @@ jobs:
         with:
           node-version: 24
 
-      - name: Generate seed SQL from upstream blocklist (for diffing)
-        run: node scripts/update_disposable_domains.js
-
       - name: Bump extension version and generate upgrade if blocklist changed
-        run: |
-          if [ -n "$(git status --porcelain email_guard/seed/disposable_email_domains.sql)" ]; then
-            node scripts/bump_email_guard_version.js
-          else
-            echo "Blocklist unchanged; skipping version bump"
-          fi
+        run: node scripts/bump_email_guard_version.js
 
       - name: Commit and push changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add email_guard/seed/disposable_email_domains.sql email_guard/*.sql email_guard/email_guard.control
+            git add email_guard/*.sql email_guard/email_guard.control email_guard/README.md scripts/bump_email_guard_version.js
             git commit -m "chore(email_guard): refresh blocklist and bump version if needed"
             git push
           else

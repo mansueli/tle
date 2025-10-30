@@ -1,7 +1,7 @@
 \echo Use "CREATE EXTENSION email_guard" to load this file.
 \quit
 
--- email_guard v0.2.0
+-- email_guard v0.3.0
 -- Signup email guard: Gmail normalization and disposable domain checks for Supabase Auth hooks
 
 create table if not exists @extschema@.disposable_email_domains (
@@ -152,7 +152,6 @@ revoke execute on function @extschema@.normalize_email(text) from authenticated,
 revoke execute on function @extschema@.is_disposable_email_domain(text) from authenticated, anon, public;
 revoke execute on function @extschema@.is_disposable_email(text) from authenticated, anon, public;
 revoke execute on function @extschema@.hook_prevent_disposable_and_enforce_gmail_uniqueness(jsonb) from authenticated, anon, public;
-
 
 -- Seed disposable email domains (auto-generated)
 -- Source: https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf
@@ -2223,6 +2222,7 @@ insert into @extschema@.disposable_email_domains(domain) values
 ('intopwa.org'),
 ('introex.com'),
 ('investore.co'),
+('inwagit.com'),
 ('ionq.pl'),
 ('iotf.net'),
 ('iozak.com'),
@@ -2983,6 +2983,7 @@ insert into @extschema@.disposable_email_domains(domain) values
 ('mugadget.com'),
 ('munik.edu.pl'),
 ('munoubengoshi.gq'),
+('muonwhila.com'),
 ('musiccode.me'),
 ('mutant.me'),
 ('mvpmedix.com'),
@@ -2998,6 +2999,7 @@ insert into @extschema@.disposable_email_domains(domain) values
 ('mybitti.de'),
 ('mycleaninbox.net'),
 ('mycorneroftheinter.net'),
+('mycreativeinbox.com'),
 ('myde.ml'),
 ('mydefipet.live'),
 ('mydemo.equipment'),
@@ -4021,6 +4023,7 @@ insert into @extschema@.disposable_email_domains(domain) values
 ('sudern.de'),
 ('sueshaw.com'),
 ('suexamplesb.com'),
+('suftwari.com'),
 ('suioe.com'),
 ('super-auswahl.de'),
 ('superblohey.com'),
