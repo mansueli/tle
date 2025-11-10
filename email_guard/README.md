@@ -29,12 +29,12 @@ Make sure your local project is connected to your Supabase database (`supabase l
 
 ### 2. Generate a migration with dbdev
 
-Use dbdev to pull version `0.4.0` (or newer) into your migrations folder. Example:
+Use dbdev to pull version `0.5.0` (or newer) into your migrations folder. Example:
 
 ```bash
 dbdev add \
   -o ./supabase/migrations/ \
-  -v 0.4.0 \
+  -v 0.5.0 \
   -s extensions \
   package \
   -n mansueli@email_guard
