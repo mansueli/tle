@@ -1,0 +1,42 @@
+-- Auto-generated upgrade to embed latest disposable domain data
+
+-- Source: https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf
+
+insert into @extschema@.disposable_email_domains(domain) values
+('123mails.org'),
+('aiphotoeditor.io'),
+('aiphotoenhancer.me'),
+('buzzcut.ws'),
+('compressjpg.io'),
+('deepmails.org'),
+('deepyinc.com'),
+('deshnetarchadacalculator.one'),
+('dnsclick.com'),
+('eldobhato-level.hu'),
+('fusioninbox.com'),
+('gagcalculator.me'),
+('gongjua.com'),
+('inctart.com'),
+('ixunbo.com'),
+('justdefinition.com'),
+('lordofmysteries.org'),
+('lovecalculatorname.org'),
+('lumeika.com'),
+('mailsbay.com'),
+('mcpservers.one'),
+('mediaeast.uk'),
+('mediaholy.com'),
+('oskarstalbergcitygenerator.com'),
+('pdf-cutter.com'),
+('pinkgreengenerator.me'),
+('rulersonline.com'),
+('superbowlstarttime.org'),
+('swagpapa.com'),
+('temp.skymeshdynamics.com'),
+('tempmailr.com'),
+('trashmail.hu'),
+('uselesswebsites.net'),
+('virgilian.com'),
+('whitehousecalculator.com'),
+('zain.com.co')
+ON CONFLICT (domain) DO NOTHING;
