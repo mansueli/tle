@@ -68,15 +68,27 @@ Behavior:
 
 ## Keeping the blocklist current
 
-This repo ships an automated workflow:
-- Weekly job fetches the upstream disposable-email list.
-- If there are changes, it bumps the minor version, creates the upgrade script, and commits both the new base version and control-file update.
+This repo ships an automated workflow that runs every Monday at 12:00 UTC:
+1. Fetches the upstream disposable-email list.
+2. If there are changes, bumps the minor version, creates the upgrade script, and commits both the new base version and control-file update.
+3. Automatically publishes the updated package to [database.dev](https://database.dev) using the `dbdev` CLI.
 
-To publish the updated version:
+### Required repository secret
+
+To enable automated publishing, add the following secret to the repository
+(**Settings → Secrets and variables → Actions → New repository secret**):
+
+| Secret name   | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `DBDEV_TOKEN` | Your [database.dev](https://database.dev) token (found in your account settings). |
+
+Without this secret the workflow will still commit and push blocklist updates, but the `dbdev publish` step will fail.
+
+To publish manually:
 
 ```bash
-dbdev login        # paste your database.dev token
-dbdev publish      # in the repo root or the email_guard folder
+dbdev login        # paste your database.dev token when prompted
+dbdev publish --path email_guard
 ```
 
 Upgrading your database to the new version pulls in the refreshed blocklist automatically.

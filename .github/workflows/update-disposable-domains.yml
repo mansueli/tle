@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -23,14 +23,42 @@ jobs:
       - name: Bump extension version and generate upgrade if blocklist changed
         run: node scripts/bump_email_guard_version.js
 
-      - name: Commit and push changes
+      - name: Detect changes
+        id: detect-changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add email_guard/*.sql email_guard/email_guard.control email_guard/README.md scripts/bump_email_guard_version.js
-            git commit -m "chore(email_guard): refresh blocklist and bump version if needed"
-            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No changes to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Commit and push changes
+        if: steps.detect-changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add email_guard/*.sql email_guard/email_guard.control email_guard/README.md scripts/bump_email_guard_version.js
+          git commit -m "chore(email_guard): refresh blocklist and bump version if needed"
+          git push
+
+      - name: Install dbdev CLI
+        if: steps.detect-changes.outputs.changed == 'true'
+        run: brew install supabase/tap/dbdev
+
+      - name: Authenticate dbdev
+        if: steps.detect-changes.outputs.changed == 'true'
+        env:
+          DBDEV_TOKEN: ${{ secrets.DBDEV_TOKEN }}
+        run: |
+          if [ -z "$DBDEV_TOKEN" ]; then
+            echo "Error: DBDEV_TOKEN secret is not set" >&2
+            exit 1
+          fi
+          mkdir -p ~/.dbdev
+          printf '[registries.dbdev]\nbase_url = "https://api.database.dev/"\napi_key = "%s"\n\n[registry]\ndefault = "dbdev"\n' \
+            "$DBDEV_TOKEN" > ~/.dbdev/config.toml
+          printf '[registries.dbdev]\ntoken = "%s"\n' "$DBDEV_TOKEN" > ~/.dbdev/credentials.toml
+
+      - name: Publish to database.dev
+        if: steps.detect-changes.outputs.changed == 'true'
+        run: dbdev publish --path email_guard
