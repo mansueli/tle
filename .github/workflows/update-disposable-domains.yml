@@ -55,13 +55,8 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.dbdev
-          cat > ~/.dbdev/config.toml << 'EOF'
-          [registries.dbdev]
-          base_url = "https://api.database.dev/"
-
-          [registry]
-          default = "dbdev"
-          EOF
+          printf '[registries.dbdev]\nbase_url = "https://api.database.dev/"\napi_key = "%s"\n\n[registry]\ndefault = "dbdev"\n' \
+            "$DBDEV_TOKEN" > ~/.dbdev/config.toml
           printf '[registries.dbdev]\ntoken = "%s"\n' "$DBDEV_TOKEN" > ~/.dbdev/credentials.toml
 
       - name: Publish to database.dev
