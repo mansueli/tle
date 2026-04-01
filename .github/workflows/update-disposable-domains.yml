@@ -24,6 +24,7 @@ jobs:
         run: node scripts/bump_email_guard_version.js
 
       - name: Commit and push changes
+        id: commit
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
@@ -31,6 +32,30 @@ jobs:
             git add email_guard/*.sql email_guard/email_guard.control email_guard/README.md scripts/bump_email_guard_version.js
             git commit -m "chore(email_guard): refresh blocklist and bump version if needed"
             git push
+            echo "changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "No changes to commit"
+            echo "changes=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Install dbdev CLI
+        if: steps.commit.outputs.changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST=$(curl -fsSL -H "Authorization: token $GH_TOKEN" \
+            "https://api.github.com/repos/supabase/dbdev/releases/latest" \
+            | grep '"tag_name"' | cut -d'"' -f4)
+          curl -fsSL "https://github.com/supabase/dbdev/releases/download/${LATEST}/dbdev-${LATEST}-linux-amd64.tar.gz" \
+            | tar -xzf - -C /tmp
+          sudo install -m 755 /tmp/dbdev /usr/local/bin/dbdev
+
+      - name: Publish to database.dev
+        if: steps.commit.outputs.changes == 'true'
+        env:
+          DBDEV_TOKEN: ${{ secrets.DBDEV_TOKEN }}
+        run: |
+          mkdir -p ~/.dbdev
+          (umask 077 && printf '[registries.dbdev]\ntoken = "%s"\n' "$DBDEV_TOKEN" > ~/.dbdev/credentials.toml)
+          dbdev publish --path email_guard
+          rm -f ~/.dbdev/credentials.toml
