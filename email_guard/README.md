@@ -73,7 +73,7 @@ This repo ships an automated workflow that runs every Monday at 12:00 UTC:
 2. If there are changes, bumps the minor version, creates the upgrade script, and commits both the new base version and control-file update.
 3. Automatically publishes the updated package to [database.dev](https://database.dev) using the `dbdev` CLI.
 
-### Required repository secret
+### Required repository secrets
 
 To enable automated publishing, add the following secret to the repository
 (**Settings → Secrets and variables → Actions → New repository secret**):
@@ -81,8 +81,9 @@ To enable automated publishing, add the following secret to the repository
 | Secret name   | Description                                                                 |
 | ------------- | --------------------------------------------------------------------------- |
 | `DBDEV_TOKEN` | Your [database.dev](https://database.dev) token (found in your account settings). |
+| `SUPABASE_ANON_KEY` | Your Supabase anon key, used to authenticate the dbdev registry API. |
 
-Without this secret the workflow will still commit and push blocklist updates, but the `dbdev publish` step will fail.
+Without these secrets the workflow will still commit and push blocklist updates, but the `dbdev publish` step will fail.
 
 To publish manually:
 

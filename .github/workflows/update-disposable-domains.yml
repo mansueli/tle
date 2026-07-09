@@ -41,23 +41,42 @@ jobs:
           git commit -m "chore(email_guard): refresh blocklist and bump version if needed"
           git push
 
-      - name: Install dbdev CLI
+      # Install dbdev with trust fix
+      - name: Trust and install dbdev CLI
         if: steps.detect-changes.outputs.changed == 'true'
-        run: brew install supabase/tap/dbdev
+        run: |
+          brew trust supabase/tap || true
+          brew install supabase/tap/dbdev
 
+      # Authenticate dbdev - matching your local working config
       - name: Authenticate dbdev
         if: steps.detect-changes.outputs.changed == 'true'
         env:
           DBDEV_TOKEN: ${{ secrets.DBDEV_TOKEN }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$DBDEV_TOKEN" ]; then
-            echo "Error: DBDEV_TOKEN secret is not set" >&2
+          if [ -z "$DBDEV_TOKEN" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Error: DBDEV_TOKEN and SUPABASE_ANON_KEY secrets must be set" >&2
             exit 1
           fi
+
           mkdir -p ~/.dbdev
-          printf '[registries.dbdev]\nbase_url = "https://api.database.dev/"\napi_key = "%s"\n\n[registry]\ndefault = "dbdev"\n' \
-            "$DBDEV_TOKEN" > ~/.dbdev/config.toml
-          printf '[registries.dbdev]\ntoken = "%s"\n' "$DBDEV_TOKEN" > ~/.dbdev/credentials.toml
+
+          cat > ~/.dbdev/config.toml << EOF
+          [registries.dbdev]
+          base_url = "https://api.database.dev/"
+          api_key = "$SUPABASE_ANON_KEY"
+
+          [registry]
+          default = "dbdev"
+          EOF
+
+          cat > ~/.dbdev/credentials.toml << EOF
+          [registries.dbdev]
+          token = "$DBDEV_TOKEN"
+          EOF
+
+          echo "✅ dbdev configured (config.toml + credentials.toml)"
 
       - name: Publish to database.dev
         if: steps.detect-changes.outputs.changed == 'true'
